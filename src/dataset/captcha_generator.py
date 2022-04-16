@@ -1,0 +1,305 @@
+"""
+Original file is located at
+    https://colab.research.google.com/drive/1IJ04G1Nyo-bm9nf9QRWyAGtVUJigU37d
+
+Install on colab
+!pip install Pillow
+!pip install captcha
+"""
+
+import os
+import random
+import string
+# from google.colab import files
+# import json
+from PIL import Image
+from PIL import ImageFilter
+from PIL.ImageDraw import Draw
+from PIL.ImageFont import truetype
+try:
+    from cStringIO import StringIO as BytesIO
+except ImportError:
+    from io import BytesIO
+
+DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('/Captcha')), 'data')
+
+DEFAULT_FONTS = ['thorndale-bold_bigfontsite.com.ttf'] # Font type of the Jail Tracker website captchas
+
+__all__ = ['ImageCaptcha']
+
+table = []
+for i in range(256):
+    table.append( int(i * 1.97) )
+
+"""
+The ImageCaptcha class definition below is based on: https://github.com/lepture/captcha/blob/master/captcha/image.py
+We do not generate noise dots
+"""
+
+def random_color(start, end, opacity=None):
+    red = random.randint(start, end)
+    green = random.randint(start, end)
+    blue = random.randint(start, end)
+    if opacity is None:
+        return (red, green, blue)
+    return (red, green, blue, opacity)
+
+class _Captcha(object):
+    def generate(self, chars, format='png'):
+        """Generate an Image Captcha of the given characters.
+        :param chars: text to be generated.
+        :param format: image file format
+        """
+        im = self.generate_image(chars)
+        out = BytesIO()
+        im.save(out, format=format)
+        out.seek(0)
+        return out
+
+    def write(self, chars, output, format='png'):
+        """Generate and write an image CAPTCHA data to the output.
+        :param chars: text to be generated.
+        :param output: output destination.
+        :param format: image file format
+        """
+        im = self.generate_image(chars)
+        return im.save(output, format=format)
+
+
+class ImageCaptcha(_Captcha):
+    """Create an image CAPTCHA.
+    Many of the codes are borrowed from wheezy.captcha, with a modification
+    for memory and developer friendly.
+    ImageCaptcha has one built-in font, DroidSansMono, which is licensed under
+    Apache License 2. You should always use your own fonts::
+        captcha = ImageCaptcha(fonts=['/path/to/A.ttf', '/path/to/B.ttf'])
+    You can put as many fonts as you like. But be aware of your memory, all of
+    the fonts are loaded into your memory, so keep them a lot, but not too
+    many.
+    :param width: The width of the CAPTCHA image.
+    :param height: The height of the CAPTCHA image.
+    :param fonts: Fonts to be used to generate CAPTCHA images.
+    :param font_sizes: Random choose a font size from this parameters.
+    """
+    def __init__(self, width=128, height=32, fonts=None, font_sizes=None):
+        self._width = width
+        self._height = height
+        self._fonts = fonts or DEFAULT_FONTS
+        self._font_sizes = font_sizes or (20, 24, 28)
+        self._truefonts = []
+
+    @property
+    def truefonts(self):
+        if self._truefonts:
+            return self._truefonts
+        self._truefonts = tuple([
+            truetype(n, s)
+            for n in self._fonts
+            for s in self._font_sizes
+        ])
+        return self._truefonts
+
+    @staticmethod
+    def create_noise_horizontal_line(image):
+        """
+        Generate 1-2 horizontal lines that can be slanted
+        """
+        draw = Draw(image)
+        w, h = image.size
+        width = random.randint(1,2)
+        line_count = random.randint(1,2)
+        
+        for i in range(line_count):
+            x1 = random.randint(0, w)
+            x2 = random.randint(0, w)
+            y1 = random.randint(0, h)
+            y2 = random.randint(0, h)
+            points = [x1, y2, x2, y1]
+            draw.line(((x1, y1), (x2, y2)), fill=random_color(10, 200, random.randint(220, 255)), width=width)
+        return image
+
+    @staticmethod
+    def create_noise_vertical_line(image, width=1, number=random.randint(0,3)):
+        """
+        Generate 0-3 vertical lines that can be tilted
+        """
+        draw = Draw(image)
+        w, h = image.size
+        
+        while number:
+            x1 = random.randint(0, w)
+            if random.random() > 0.5:
+                x2 = x1 - random.randint(0, 10)
+            else:
+                x2 = x1 + random.randint(0, 10)
+            y1 = random.randint(0, h)
+            y2 = random.randint(0, h)
+            draw.line(((x1, y1), (x2, y2)), fill=random_color(10, 200, random.randint(220, 255)), width=width)
+            number -= 1
+        return image
+
+    def create_captcha_image(self, chars, background):
+        """Create the CAPTCHA image itself.
+        :param chars: text to be generated.
+        :param color: color of the text.
+        :param background: color of the background.
+        The color should be a tuple of 3 numbers, such as (0, 255, 255).
+        """
+        image = Image.new('RGB', (self._width, self._height), background)
+        draw = Draw(image)
+
+        def _draw_character(c, font):
+            w, h = draw.textsize(c, font=font)
+
+            dx = 5
+            dy = 5
+            im = Image.new('RGB', (w + dx, h + dy))
+            Draw(im).text((dx, dy), c, font=font, fill=random_color(10, 200, 30))
+            return im
+
+        images = []
+        font_arr = []
+        for c in chars:
+
+            if random.random() > 0.15:
+                k = random.randint(0,2)
+                font = self.truefonts[k]
+                images.append(_draw_character("   ", font))
+                font_arr.append(k)
+            
+            k = random.randint(0,2)
+            font = self.truefonts[k]
+            images.append(_draw_character(c,font))
+            font_arr.append(k)
+        
+        text_width = sum([im.size[0] for im in images])
+        
+        width = max(text_width, self._width)
+        image = image.resize((width, self._height))
+
+        average = int(text_width / len(chars))
+        rand = int(.15 * average)
+        offset = int(average * random.uniform(.05, .1))
+
+        k = 0
+        for im in images:
+            w, h = im.size
+            mask = im.convert('L').point(table)
+            # im.putalpha(200)
+            image.paste(im, (offset, -random.randint(0, int(self._font_sizes[font_arr[k]]/4))), mask)
+            #image.paste(im, (offset, int((self._height - h - int(h/4)))), mask)
+            offset = offset + w + random.randint(-rand, 0)
+            k += 1
+        
+        if width > self._width:
+            image = image.resize((self._width, self._height))
+        
+        
+        return image
+
+    def generate_image(self, chars):
+        """Generate the image of the given characters.
+        :param chars: text to be generated.
+        """
+        background = random_color(100, 255, 30)
+        im = self.create_captcha_image(chars,background)
+        self.create_noise_vertical_line(im)
+        self.create_noise_horizontal_line(im)
+        im = im.filter(ImageFilter.SMOOTH)
+        im = im.resize((self._width, self._height))
+        return im
+
+# Testing for one image
+
+cap = ImageCaptcha()
+letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
+tmp = ''.join(random.choice(letters) for j in range(4))
+cap_img = cap.generate_image(tmp)
+cap_img.save('test' + '.png')
+
+# Testing for one hundred images
+"""
+parent_dir = 'Captcha2/'
+if not os.path.exists(parent_dir):
+    os.mkdir(parent_dir)
+
+cap = ImageCaptcha()
+letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
+    
+for i in range(100):
+    tmp = ''.join(random.choice(letters) for j in range(4))
+    cap_img = cap.generate_image(tmp)
+    cap_img.save(parent_dir + "/" + str(i) + '.png')
+    
+!zip -r /content/Captcha2.zip /content/Captcha2
+files.download('Captcha2.zip')
+"""
+
+# Create an instance of the ImageCaptcha class
+cap = ImageCaptcha()
+
+# Create directories for training, validating and testing data
+parent_dir = 'Captcha/'
+if not os.path.exists(parent_dir):
+    os.mkdir(parent_dir)
+
+train_path = os.path.join(parent_dir,'train')
+valid_path = os.path.join(parent_dir,'valid')
+test_path = os.path.join(parent_dir,'test')
+if not os.path.exists(train_path):
+    os.mkdir(train_path)
+if not os.path.exists(valid_path):
+    os.mkdir(valid_path)
+if not os.path.exists(test_path):
+    os.mkdir(test_path)
+
+
+
+# Store mappings of file name to the label
+# file = open('Captcha/' + 'mapping.txt', 'w')
+# dict = {}
+
+# Captcha characters are lowercase letters, uppercase letters and numbers
+# Each captcha label has four characters
+letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
+
+# File names are formatted as "label_<another identifier>.png" since it is possible to have the same captcha label but different design
+
+# Generate 40,000 captchas for training
+print("Generating training captchas")
+for i in range(40000):
+
+    tmp = ''.join(random.choice(letters) for j in range(4))
+
+    # dict['train_'+ str(i)] = tmp
+    cap_img = cap.generate_image(tmp)
+    saved = cap_img.save(train_path + '/' + tmp + "_" + str(i).rjust(5,'0') + '.png')
+
+# Generate 5,000 captchas for validating
+print("Generating validation captchas")
+for i in range(5000):
+
+    tmp = ''.join(random.choice(letters) for j in range(4))
+
+    # dict['valid_'+ str(i)] = tmp
+    cap_img = cap.generate_image(tmp)
+    saved = cap_img.save(valid_path + '/' + tmp + "_" + str(i).rjust(5,'0') + '.png')
+
+# Generate 5,000 captchas for testing
+print("Generating testing captchas")
+for i in range(5000):
+
+    tmp = ''.join(random.choice(letters) for j in range(4))
+
+    # dict['test_'+ str(i)] = tmp
+    cap_img = cap.generate_image(tmp)
+    saved = cap_img.save(test_path + '/'+ tmp + "_" + str(i).rjust(5,'0') + '.png')
+
+# file.write(json.dumps(dict))
+# file.close()
+
+""" Export on colab
+!zip -r /content/Captcha.zip /content/Captcha
+
+files.download('Captcha.zip')
+"""
