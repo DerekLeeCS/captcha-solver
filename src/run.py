@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 from dataset.captcha_dataset import CaptchaDataset
 from dataset.tfrecord_handler import TFRecordHandler
-from model import create_model, prepare_example, _get_layer_name
+from model import create_model, prepare_example
 
 # From:
 # https://www.tensorflow.org/guide/gpu#limiting_gpu_memory_growth
@@ -61,14 +61,9 @@ if __name__ == '__main__':
                                           interpolation='nearest'),
     ])
 
-
-    def prepare(x):
-        return prepare_example(x, num_chars)
-
-
     train_dataset = (
         train_dataset
-            .map(prepare, num_parallel_calls=AUTOTUNE)
+            .map(prepare_example, num_parallel_calls=AUTOTUNE)
             .cache()
             .shuffle(tf.cast(num_train_examples, tf.int64))
             .batch(BATCH_SIZE)
@@ -78,14 +73,14 @@ if __name__ == '__main__':
     valid_dataset = (
         valid_dataset
             .batch(BATCH_SIZE)
-            .map(prepare, num_parallel_calls=AUTOTUNE)
+            .map(prepare_example, num_parallel_calls=AUTOTUNE)
             .cache()
             .prefetch(AUTOTUNE)
     )
     test_dataset = (
         test_dataset
             .batch(BATCH_SIZE)
-            .map(prepare, num_parallel_calls=AUTOTUNE)
+            .map(prepare_example, num_parallel_calls=AUTOTUNE)
             .cache()
             .prefetch(AUTOTUNE)
     )

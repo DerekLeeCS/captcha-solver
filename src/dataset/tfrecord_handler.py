@@ -7,10 +7,6 @@ import tensorflow as tf
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
-def get_label_name(char_num: int) -> str:
-    return f'char_{char_num}'
-
-
 class TFRecordHandler:
     def __init__(self, num_chars: int) -> None:
         self.num_chars = num_chars

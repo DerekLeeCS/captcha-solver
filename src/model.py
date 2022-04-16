@@ -6,9 +6,6 @@ from dataset.captcha_dataset import CaptchaDataset
 
 OUTPUTS = CaptchaDataset.get_labels()
 
-def _get_layer_name(char_num: int) -> str:
-    return f'out_{char_num}'
-
 
 def create_model(h: int, w: int, n: int) -> tf.keras.Model:
     """
@@ -37,7 +34,7 @@ def create_model(h: int, w: int, n: int) -> tf.keras.Model:
     return model
 
 
-def prepare_example(example: Dict, n: int) -> Tuple[tf.Tensor, tf.Tensor]:
+def prepare_example(example: Dict) -> Tuple[tf.Tensor, tf.Tensor]:
     image = example['image']
     image = tf.image.per_image_standardization(image)
 
