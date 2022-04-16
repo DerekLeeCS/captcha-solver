@@ -2,8 +2,8 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 from dataset.captcha_dataset import CaptchaDataset
-from dataset.tfrecord_handler import TFRecordHandler
-from model import create_model, prepare_example
+from dataset.tfrecord_handler import TFRecordHandler, load_image
+from model import create_model, prepare_example, preprocess_image
 
 # From:
 # https://www.tensorflow.org/guide/gpu#limiting_gpu_memory_growth
@@ -20,16 +20,22 @@ if gpus:
         # Virtual devices must be set before GPUs have been initialized
         print(e)
 
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    1e-3,
+    decay_steps=5000,
+    decay_rate=0.96,
+    staircase=True,
+)
 AUTOTUNE = tf.data.experimental.AUTOTUNE
-OPTIMIZER = tf.keras.optimizers.Adam(1e-3)
+OPTIMIZER = tf.keras.optimizers.Adam(lr_schedule)
 LOSS = tf.keras.losses.CategoricalCrossentropy()
 METRIC = tf.keras.metrics.CategoricalAccuracy()
 
 NUM_EPOCHS = 100
 BATCH_SIZE = 64
 
-CHECKPOINT_PATH = 'checkpoints/'
-SAVED_MODEL_PATH = 'saved_model/'
+CHECKPOINT_PATH = 'checkpoints/captcha_solver/'
+SAVED_MODEL_PATH = 'saved_model/captcha_solver/'
 
 
 def train_model(model: tf.keras.Model, train_ds: tf.data.Dataset, valid_ds: tf.data.Dataset) -> None:
@@ -40,8 +46,7 @@ def train_model(model: tf.keras.Model, train_ds: tf.data.Dataset, valid_ds: tf.d
         period=20,  # Saves every 20 epochs
         save_best_only=True)
 
-    model.fit(train_ds, epochs=NUM_EPOCHS, validation_data=valid_ds,
-              callbacks=cp_callback)
+    model.fit(train_ds, epochs=NUM_EPOCHS, validation_data=valid_ds, callbacks=cp_callback)
 
 
 if __name__ == '__main__':
@@ -54,19 +59,12 @@ if __name__ == '__main__':
     train_dataset, valid_dataset, test_dataset = CaptchaDataset.get_data()
     num_train_examples = TFRecordHandler.count_size(train_dataset)
 
-    # Define data augmentation
-    augment = tf.keras.Sequential([
-        tf.keras.layers.RandomTranslation(height_factor=0.1, width_factor=0.1, fill_mode='nearest',
-                                          interpolation='nearest'),
-    ])
-
     train_dataset = (
         train_dataset
             .map(prepare_example, num_parallel_calls=AUTOTUNE)
             .cache()
             .shuffle(tf.cast(num_train_examples, tf.int64))
             .batch(BATCH_SIZE)
-            # .map(lambda x, y: (augment(x, training=True), y), num_parallel_calls=AUTOTUNE)
             .prefetch(AUTOTUNE)
     )
     valid_dataset = (

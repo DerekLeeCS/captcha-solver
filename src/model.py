@@ -24,7 +24,7 @@ def create_model(h: int, w: int, n: int) -> tf.keras.Model:
 
     x = tf.keras.layers.Flatten()(x)
     x = tf.keras.layers.Dense(1024, activation='relu')(x)
-    # x = tf.keras.layers.Dropout(0.5)(x)
+    x = tf.keras.layers.Dropout(0.5)(x)
 
     x = tf.keras.layers.Dense(n * len(OUTPUTS))(x)
     x = tf.reshape(x, (-1, n, len(OUTPUTS)))
@@ -34,9 +34,14 @@ def create_model(h: int, w: int, n: int) -> tf.keras.Model:
     return model
 
 
+def preprocess_image(image: tf.Tensor) -> tf.Tensor:
+    image = tf.image.per_image_standardization(image)
+    return image
+
+
 def prepare_example(example: Dict) -> Tuple[tf.Tensor, tf.Tensor]:
     image = example['image']
-    image = tf.image.per_image_standardization(image)
+    image = preprocess_image(image)
 
     label = example['label']
     label = tf.one_hot(label, len(OUTPUTS))
