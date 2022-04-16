@@ -6,16 +6,7 @@ from typing import Dict, Tuple
 
 import tensorflow as tf
 
-from dataset.tfrecord_handler import TFRecordHandler
-
-
-def load_image(filename: str) -> tf.Tensor:
-    """Read an image given the file name.
-    From:
-    https://www.tensorflow.org/api_docs/python/tf/io/read_file
-    """
-    raw = tf.io.read_file(filename)
-    return tf.image.decode_png(raw, channels=3)
+from dataset.tfrecord_handler import TFRecordHandler, load_image
 
 
 class CaptchaDataset:
@@ -34,9 +25,6 @@ class CaptchaDataset:
     _LABELS = string.ascii_letters + string.digits
     _LABEL_MAPPINGS = {x: i for i, x in enumerate(_LABELS)}
     _LABEL_REVERSE_MAPPINGS = {v: k for k, v in _LABEL_MAPPINGS.items()}
-
-    def __init__(self) -> None:
-        self.tfrecord_handler = TFRecordHandler(CaptchaDataset._NUM_CHARS)
 
     @staticmethod
     def read_examples(dir_name: Path) -> Dict:
@@ -76,20 +64,22 @@ class CaptchaDataset:
     def get_reverse_label_mappings() -> Dict:
         return CaptchaDataset._LABEL_REVERSE_MAPPINGS
 
-    def preprocess_tfrecord(self, dir_name: Path) -> tf.data.TFRecordDataset:
+    @staticmethod
+    def preprocess_tfrecord(dir_name: Path) -> tf.data.TFRecordDataset:
         """Apply preprocessing to each element in the dataset and cache the results for future use."""
 
         # Get the absolute path for every TFRecord in the directory
         file_names = [os.path.join(dir_name, file_name) for file_name in os.listdir(dir_name)]
 
         return (
-            self.tfrecord_handler.read_examples(file_names)
-                # .map(preprocess_example, num_parallel_calls=AUTOTUNE)
+            TFRecordHandler.read_examples(file_names)
         )
 
-    def get_data(self) -> Tuple[tf.data.TFRecordDataset, tf.data.TFRecordDataset, tf.data.TFRecordDataset]:
-        return self.preprocess_tfrecord(self.DIR_TFRECORD_TRAIN), self.preprocess_tfrecord(self.DIR_TFRECORD_VALID), \
-               self.preprocess_tfrecord(self.DIR_TFRECORD_TEST)
+    @staticmethod
+    def get_data() -> Tuple[tf.data.TFRecordDataset, tf.data.TFRecordDataset, tf.data.TFRecordDataset]:
+        return CaptchaDataset.preprocess_tfrecord(CaptchaDataset.DIR_TFRECORD_TRAIN), \
+               CaptchaDataset.preprocess_tfrecord(CaptchaDataset.DIR_TFRECORD_VALID), \
+               CaptchaDataset.preprocess_tfrecord(CaptchaDataset.DIR_TFRECORD_TEST)
 
 
 def write_dataset_to_tfrecord():
@@ -131,8 +121,7 @@ if __name__ == '__main__':
     # Test reading a TFRecord
     import matplotlib.pyplot as plt
 
-    dataset = CaptchaDataset()
-    _, _, ds = dataset.get_data()
+    _, _, ds = CaptchaDataset.get_data()
     for example in ds.take(5):
         img = example.pop('image').numpy()
         plt.imshow(img)

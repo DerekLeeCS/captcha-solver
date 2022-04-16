@@ -51,8 +51,7 @@ if __name__ == '__main__':
     model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRIC)
     model.summary()
 
-    dataset = CaptchaDataset()
-    train_dataset, valid_dataset, test_dataset = dataset.get_data()
+    train_dataset, valid_dataset, test_dataset = CaptchaDataset.get_data()
     num_train_examples = TFRecordHandler.count_size(train_dataset)
 
     # Define data augmentation
@@ -95,7 +94,7 @@ if __name__ == '__main__':
         for img, label in zip(batch_img, batch_label):
             plt.imshow(img)
             plt.show()
-            # print(label)
+
             label_char = tf.argmax(label, axis=-1)
             label_true = [mappings[tf.get_static_value(x)] for x in label_char]
             print("True:", label_true)

@@ -7,6 +7,15 @@ import tensorflow as tf
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
+def load_image(filename: str) -> tf.Tensor:
+    """Read an image given the file name.
+    From:
+    https://www.tensorflow.org/api_docs/python/tf/io/read_file
+    """
+    raw = tf.io.read_file(filename)
+    return tf.image.decode_png(raw, channels=3)
+
+
 class TFRecordHandler:
     def __init__(self, num_chars: int) -> None:
         self.num_chars = num_chars
@@ -61,7 +70,8 @@ class TFRecordHandler:
                 serialized = TFRecordHandler.serialize_example(img, label)
                 writer.write(serialized)
 
-    def _parse_tfr_element(self, element):
+    @staticmethod
+    def _parse_tfr_element(element):
         """Parse a single example from a TFRecord.
         Based on:
         https://stackoverflow.com/a/60283571 and https://www.tensorflow.org/tutorials/load_data/tfrecord
@@ -85,13 +95,14 @@ class TFRecordHandler:
 
         return example
 
-    def read_examples(self, filename: Union[str, List[str]]) -> tf.data.TFRecordDataset:
+    @staticmethod
+    def read_examples(filename: Union[str, List[str]]) -> tf.data.TFRecordDataset:
         """
         Based on:
         https://www.tensorflow.org/tutorials/load_data/tfrecord
         """
         raw_dataset = tf.data.TFRecordDataset(filename, num_parallel_reads=AUTOTUNE)
-        parsed_dataset = raw_dataset.map(self._parse_tfr_element, num_parallel_calls=AUTOTUNE)
+        parsed_dataset = raw_dataset.map(TFRecordHandler._parse_tfr_element, num_parallel_calls=AUTOTUNE)
         return parsed_dataset
 
     @staticmethod
