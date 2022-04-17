@@ -11,7 +11,6 @@ import os
 import random
 import string
 # from google.colab import files
-# import json
 from PIL import Image
 from PIL import ImageFilter
 from PIL.ImageDraw import Draw
@@ -226,7 +225,7 @@ def generate_captchas(filepath: str, num_captchas: int) -> None:
 cap = ImageCaptcha()
 tmp = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(4))
 cap_img = cap.generate_image(tmp)
-cap_img.save('test' + '.png')
+cap_img.save('test.png')
 
 # Testing for 100 images
 """
