@@ -2,5 +2,6 @@
 __pycache__/
 checkpoints/
 saved_model/
+*.jpg
 *.png
 *.tfrecord
