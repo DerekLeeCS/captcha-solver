@@ -212,8 +212,8 @@ class ImageCaptcha(_Captcha):
 
 # Testing for one image
 cap = ImageCaptcha()
-letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
-tmp = ''.join(random.choice(letters) for j in range(4))
+CAPTCHA_LETTERS = string.ascii_lowercase + string.ascii_uppercase + string.digits
+tmp = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(4))
 cap_img = cap.generate_image(tmp)
 cap_img.save('test' + '.png')
 
@@ -227,7 +227,7 @@ cap = ImageCaptcha()
 letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
     
 for i in range(100):
-    tmp = ''.join(random.choice(letters) for j in range(4))
+    tmp = ''.join(random.choice(letters) for _ in range(4))
     cap_img = cap.generate_image(tmp)
     cap_img.save(parent_dir + "/" + str(i) + '.png')
     
@@ -250,19 +250,16 @@ os.makedirs(train_path, exist_ok=True)
 os.makedirs(valid_path, exist_ok=True)
 os.makedirs(test_path, exist_ok=True)
 
-# Store mappings of file name to the label
-# file = open('Captcha/' + 'mapping.txt', 'w')
-# dict = {}
-
 # Captcha characters are lowercase letters, uppercase letters and numbers
 # Each captcha label has four characters
-letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
+CAPTCHA_LETTERS = string.ascii_letters + string.digits
+NUM_CHARACTERS = 4
 
 
 # File names are formatted as "label_<unique identifier>.png" since it is possible to have the same captcha label but different image
 def generate_captchas(filepath: str, num_captchas: int) -> None:
     for i in range(num_captchas):
-        captcha = ''.join(random.choice(letters) for j in range(4))
+        captcha = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(NUM_CHARACTERS))
         captcha_img = cap.generate_image(captcha)
         captcha_img.save(f'{filepath}/{captcha}_{str(i).rjust(5, "0")}.png')
 
@@ -278,9 +275,6 @@ generate_captchas(valid_path, 5000)
 # Generate 5,000 captchas for testing
 print("Generating testing captchas")
 generate_captchas(test_path, 5000)
-
-# file.write(json.dumps(dict))
-# file.close()
 
 """ Export on colab
 !zip -r /content/Captcha.zip /content/Captcha
