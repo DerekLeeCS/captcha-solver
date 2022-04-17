@@ -16,6 +16,7 @@ from PIL import Image
 from PIL import ImageFilter
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
+
 try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
@@ -23,18 +24,14 @@ except ImportError:
 
 DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('/Captcha')), 'data')
 
-DEFAULT_FONTS = ['thorndale-bold_bigfontsite.com.ttf'] # Font type of the Jail Tracker website captchas
+DEFAULT_FONTS = ['thorndale-bold_bigfontsite.com.ttf']  # Font type of the Jail Tracker website captchas
 
 __all__ = ['ImageCaptcha']
 
 table = []
 for i in range(256):
-    table.append( int(i * 1.97) )
+    table.append(int(i * 1.97))
 
-"""
-The ImageCaptcha class definition below is based on: https://github.com/lepture/captcha/blob/master/captcha/image.py
-We do not generate noise dots
-"""
 
 def random_color(start, end, opacity=None):
     red = random.randint(start, end)
@@ -43,6 +40,7 @@ def random_color(start, end, opacity=None):
     if opacity is None:
         return (red, green, blue)
     return (red, green, blue, opacity)
+
 
 class _Captcha(object):
     def generate(self, chars, format='png'):
@@ -66,6 +64,8 @@ class _Captcha(object):
         return im.save(output, format=format)
 
 
+# Based on: https://github.com/lepture/captcha/blob/master/captcha/image.py
+# We do not generate noise dots
 class ImageCaptcha(_Captcha):
     """Create an image CAPTCHA.
     Many of the codes are borrowed from wheezy.captcha, with a modification
@@ -81,6 +81,7 @@ class ImageCaptcha(_Captcha):
     :param fonts: Fonts to be used to generate CAPTCHA images.
     :param font_sizes: Random choose a font size from this parameters.
     """
+
     def __init__(self, width=128, height=32, fonts=None, font_sizes=None):
         self._width = width
         self._height = height
@@ -106,9 +107,9 @@ class ImageCaptcha(_Captcha):
         """
         draw = Draw(image)
         w, h = image.size
-        width = random.randint(1,2)
-        line_count = random.randint(1,2)
-        
+        width = random.randint(1, 2)
+        line_count = random.randint(1, 2)
+
         for i in range(line_count):
             x1 = random.randint(0, w)
             x2 = random.randint(0, w)
@@ -119,13 +120,13 @@ class ImageCaptcha(_Captcha):
         return image
 
     @staticmethod
-    def create_noise_vertical_line(image, width=1, number=random.randint(0,3)):
+    def create_noise_vertical_line(image, width=1, number=random.randint(0, 3)):
         """
         Generate 0-3 vertical lines that can be tilted
         """
         draw = Draw(image)
         w, h = image.size
-        
+
         while number:
             x1 = random.randint(0, w)
             if random.random() > 0.5:
@@ -162,18 +163,18 @@ class ImageCaptcha(_Captcha):
         for c in chars:
 
             if random.random() > 0.15:
-                k = random.randint(0,2)
+                k = random.randint(0, 2)
                 font = self.truefonts[k]
                 images.append(_draw_character("   ", font))
                 font_arr.append(k)
-            
-            k = random.randint(0,2)
+
+            k = random.randint(0, 2)
             font = self.truefonts[k]
-            images.append(_draw_character(c,font))
+            images.append(_draw_character(c, font))
             font_arr.append(k)
-        
+
         text_width = sum([im.size[0] for im in images])
-        
+
         width = max(text_width, self._width)
         image = image.resize((width, self._height))
 
@@ -186,15 +187,14 @@ class ImageCaptcha(_Captcha):
             w, h = im.size
             mask = im.convert('L').point(table)
             # im.putalpha(200)
-            image.paste(im, (offset, -random.randint(0, int(self._font_sizes[font_arr[k]]/4))), mask)
-            #image.paste(im, (offset, int((self._height - h - int(h/4)))), mask)
+            image.paste(im, (offset, -random.randint(0, int(self._font_sizes[font_arr[k]] / 4))), mask)
+            # image.paste(im, (offset, int((self._height - h - int(h/4)))), mask)
             offset = offset + w + random.randint(-rand, 0)
             k += 1
-        
+
         if width > self._width:
             image = image.resize((self._width, self._height))
-        
-        
+
         return image
 
     def generate_image(self, chars):
@@ -202,15 +202,15 @@ class ImageCaptcha(_Captcha):
         :param chars: text to be generated.
         """
         background = random_color(100, 255, 30)
-        im = self.create_captcha_image(chars,background)
+        im = self.create_captcha_image(chars, background)
         self.create_noise_vertical_line(im)
         self.create_noise_horizontal_line(im)
         im = im.filter(ImageFilter.SMOOTH)
         im = im.resize((self._width, self._height))
         return im
 
-# Testing for one image
 
+# Testing for one image
 cap = ImageCaptcha()
 letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
 tmp = ''.join(random.choice(letters) for j in range(4))
@@ -243,17 +243,15 @@ parent_dir = 'Captcha/'
 if not os.path.exists(parent_dir):
     os.mkdir(parent_dir)
 
-train_path = os.path.join(parent_dir,'train')
-valid_path = os.path.join(parent_dir,'valid')
-test_path = os.path.join(parent_dir,'test')
+train_path = os.path.join(parent_dir, 'train')
+valid_path = os.path.join(parent_dir, 'valid')
+test_path = os.path.join(parent_dir, 'test')
 if not os.path.exists(train_path):
     os.mkdir(train_path)
 if not os.path.exists(valid_path):
     os.mkdir(valid_path)
 if not os.path.exists(test_path):
     os.mkdir(test_path)
-
-
 
 # Store mappings of file name to the label
 # file = open('Captcha/' + 'mapping.txt', 'w')
@@ -263,37 +261,33 @@ if not os.path.exists(test_path):
 # Each captcha label has four characters
 letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
 
-# File names are formatted as "label_<another identifier>.png" since it is possible to have the same captcha label but different design
-
+# File names are formatted as "label_<another identifier>.png" since it is possible to have the same captcha label but different image
 # Generate 40,000 captchas for training
 print("Generating training captchas")
 for i in range(40000):
-
     tmp = ''.join(random.choice(letters) for j in range(4))
 
     # dict['train_'+ str(i)] = tmp
     cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(train_path + '/' + tmp + "_" + str(i).rjust(5,'0') + '.png')
+    saved = cap_img.save(train_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
 
 # Generate 5,000 captchas for validating
 print("Generating validation captchas")
 for i in range(5000):
-
     tmp = ''.join(random.choice(letters) for j in range(4))
 
     # dict['valid_'+ str(i)] = tmp
     cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(valid_path + '/' + tmp + "_" + str(i).rjust(5,'0') + '.png')
+    saved = cap_img.save(valid_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
 
 # Generate 5,000 captchas for testing
 print("Generating testing captchas")
 for i in range(5000):
-
     tmp = ''.join(random.choice(letters) for j in range(4))
 
     # dict['test_'+ str(i)] = tmp
     cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(test_path + '/'+ tmp + "_" + str(i).rjust(5,'0') + '.png')
+    saved = cap_img.save(test_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
 
 # file.write(json.dumps(dict))
 # file.close()
