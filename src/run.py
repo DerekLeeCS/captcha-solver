@@ -23,7 +23,7 @@ if gpus:
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
     1e-3,
     decay_steps=5000,
-    decay_rate=0.96,
+    decay_rate=0.9,
     staircase=True,
 )
 AUTOTUNE = tf.data.experimental.AUTOTUNE
@@ -41,6 +41,7 @@ SAVED_MODEL_PATH = 'saved_model/captcha_solver/'
 def train_model(model: tf.keras.Model, train_ds: tf.data.Dataset, valid_ds: tf.data.Dataset) -> None:
     cp_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=CHECKPOINT_PATH,
+        monitor='val_categorical_accuracy',
         verbose=1,
         save_weights_only=True,
         period=20,  # Saves every 20 epochs
