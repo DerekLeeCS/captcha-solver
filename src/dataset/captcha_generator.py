@@ -246,12 +246,9 @@ if not os.path.exists(parent_dir):
 train_path = os.path.join(parent_dir, 'train')
 valid_path = os.path.join(parent_dir, 'valid')
 test_path = os.path.join(parent_dir, 'test')
-if not os.path.exists(train_path):
-    os.mkdir(train_path)
-if not os.path.exists(valid_path):
-    os.mkdir(valid_path)
-if not os.path.exists(test_path):
-    os.mkdir(test_path)
+os.makedirs(train_path, exist_ok=True)
+os.makedirs(valid_path, exist_ok=True)
+os.makedirs(test_path, exist_ok=True)
 
 # Store mappings of file name to the label
 # file = open('Captcha/' + 'mapping.txt', 'w')
@@ -261,33 +258,26 @@ if not os.path.exists(test_path):
 # Each captcha label has four characters
 letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
 
-# File names are formatted as "label_<another identifier>.png" since it is possible to have the same captcha label but different image
+
+# File names are formatted as "label_<unique identifier>.png" since it is possible to have the same captcha label but different image
+def generate_captchas(filepath: str, num_captchas: int) -> None:
+    for i in range(num_captchas):
+        captcha = ''.join(random.choice(letters) for j in range(4))
+        captcha_img = cap.generate_image(captcha)
+        captcha_img.save(f'{filepath}/{captcha}_{str(i).rjust(5, "0")}.png')
+
+
 # Generate 40,000 captchas for training
 print("Generating training captchas")
-for i in range(40000):
-    tmp = ''.join(random.choice(letters) for j in range(4))
-
-    # dict['train_'+ str(i)] = tmp
-    cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(train_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
+generate_captchas(train_path, 40000)
 
 # Generate 5,000 captchas for validating
 print("Generating validation captchas")
-for i in range(5000):
-    tmp = ''.join(random.choice(letters) for j in range(4))
-
-    # dict['valid_'+ str(i)] = tmp
-    cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(valid_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
+generate_captchas(valid_path, 5000)
 
 # Generate 5,000 captchas for testing
 print("Generating testing captchas")
-for i in range(5000):
-    tmp = ''.join(random.choice(letters) for j in range(4))
-
-    # dict['test_'+ str(i)] = tmp
-    cap_img = cap.generate_image(tmp)
-    saved = cap_img.save(test_path + '/' + tmp + "_" + str(i).rjust(5, '0') + '.png')
+generate_captchas(test_path, 5000)
 
 # file.write(json.dumps(dict))
 # file.close()
