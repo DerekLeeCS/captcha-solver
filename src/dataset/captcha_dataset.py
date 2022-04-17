@@ -71,9 +71,7 @@ class CaptchaDataset:
         # Get the absolute path for every TFRecord in the directory
         file_names = [os.path.join(dir_name, file_name) for file_name in os.listdir(dir_name)]
 
-        return (
-            TFRecordHandler.read_examples(file_names)
-        )
+        return TFRecordHandler.read_examples(file_names)
 
     @staticmethod
     def get_data() -> Tuple[tf.data.TFRecordDataset, tf.data.TFRecordDataset, tf.data.TFRecordDataset]:
