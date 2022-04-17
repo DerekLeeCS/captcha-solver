@@ -38,8 +38,8 @@ def random_color(start, end, opacity=None):
     green = random.randint(start, end)
     blue = random.randint(start, end)
     if opacity is None:
-        return (red, green, blue)
-    return (red, green, blue, opacity)
+        return red, green, blue
+    return red, green, blue, opacity
 
 
 class _Captcha(object):
@@ -115,7 +115,7 @@ class ImageCaptcha(_Captcha):
             x2 = random.randint(0, w)
             y1 = random.randint(0, h)
             y2 = random.randint(0, h)
-            points = [x1, y2, x2, y1]
+            # points = [x1, y2, x2, y1]
             draw.line(((x1, y1), (x2, y2)), fill=random_color(10, 200, random.randint(220, 255)), width=width)
         return image
 
@@ -142,9 +142,7 @@ class ImageCaptcha(_Captcha):
     def create_captcha_image(self, chars, background):
         """Create the CAPTCHA image itself.
         :param chars: text to be generated.
-        :param color: color of the text.
         :param background: color of the background.
-        The color should be a tuple of 3 numbers, such as (0, 255, 255).
         """
         image = Image.new('RGB', (self._width, self._height), background)
         draw = Draw(image)
@@ -161,7 +159,6 @@ class ImageCaptcha(_Captcha):
         images = []
         font_arr = []
         for c in chars:
-
             if random.random() > 0.15:
                 k = random.randint(0, 2)
                 font = self.truefonts[k]
@@ -210,46 +207,6 @@ class ImageCaptcha(_Captcha):
         return im
 
 
-# Testing for one image
-cap = ImageCaptcha()
-CAPTCHA_LETTERS = string.ascii_lowercase + string.ascii_uppercase + string.digits
-tmp = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(4))
-cap_img = cap.generate_image(tmp)
-cap_img.save('test' + '.png')
-
-# Testing for one hundred images
-"""
-parent_dir = 'Captcha2/'
-if not os.path.exists(parent_dir):
-    os.mkdir(parent_dir)
-
-cap = ImageCaptcha()
-letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
-    
-for i in range(100):
-    tmp = ''.join(random.choice(letters) for _ in range(4))
-    cap_img = cap.generate_image(tmp)
-    cap_img.save(parent_dir + "/" + str(i) + '.png')
-    
-!zip -r /content/Captcha2.zip /content/Captcha2
-files.download('Captcha2.zip')
-"""
-
-# Create an instance of the ImageCaptcha class
-cap = ImageCaptcha()
-
-# Create directories for training, validating and testing data
-parent_dir = 'Captcha/'
-if not os.path.exists(parent_dir):
-    os.mkdir(parent_dir)
-
-train_path = os.path.join(parent_dir, 'train')
-valid_path = os.path.join(parent_dir, 'valid')
-test_path = os.path.join(parent_dir, 'test')
-os.makedirs(train_path, exist_ok=True)
-os.makedirs(valid_path, exist_ok=True)
-os.makedirs(test_path, exist_ok=True)
-
 # Captcha characters are lowercase letters, uppercase letters and numbers
 # Each captcha label has four characters
 CAPTCHA_LETTERS = string.ascii_letters + string.digits
@@ -258,11 +215,38 @@ NUM_CHARACTERS = 4
 
 # File names are formatted as "label_<unique identifier>.png" since it is possible to have the same captcha label but different image
 def generate_captchas(filepath: str, num_captchas: int) -> None:
+    captcha_generator = ImageCaptcha()
     for i in range(num_captchas):
         captcha = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(NUM_CHARACTERS))
-        captcha_img = cap.generate_image(captcha)
+        captcha_img = captcha_generator.generate_image(captcha)
         captcha_img.save(f'{filepath}/{captcha}_{str(i).rjust(5, "0")}.png')
 
+
+# Testing for 1 image
+cap = ImageCaptcha()
+tmp = ''.join(random.choice(CAPTCHA_LETTERS) for _ in range(4))
+cap_img = cap.generate_image(tmp)
+cap_img.save('test' + '.png')
+
+# Testing for 100 images
+"""
+parent_dir = 'Captcha2/'
+os.makedirs(parent_dir, exist_ok=True)
+
+generate_captchas(parent_dir, 100)
+
+!zip -r /content/Captcha2.zip /content/Captcha2
+files.download('Captcha2.zip')
+"""
+
+# Create directories for training, validating and testing data
+parent_dir = 'Captcha/'
+train_path = os.path.join(parent_dir, 'train')
+valid_path = os.path.join(parent_dir, 'valid')
+test_path = os.path.join(parent_dir, 'test')
+os.makedirs(train_path, exist_ok=True)
+os.makedirs(valid_path, exist_ok=True)
+os.makedirs(test_path, exist_ok=True)
 
 # Generate 40,000 captchas for training
 print("Generating training captchas")
