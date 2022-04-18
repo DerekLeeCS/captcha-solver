@@ -19,8 +19,8 @@ class CaptchaDataset:
     DIR_TFRECORD_TEST = Path(__file__, '../data/tfrecord/test/')
 
     _NUM_CHARS = 4
-    _IMG_HEIGHT = 32
-    _IMG_WIDTH = 128
+    _IMG_HEIGHT = 36
+    _IMG_WIDTH = 100
 
     _LABELS = string.ascii_letters + string.digits
     _LABEL_MAPPINGS = {x: i for i, x in enumerate(_LABELS)}

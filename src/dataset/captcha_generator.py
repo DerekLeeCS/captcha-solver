@@ -81,11 +81,11 @@ class ImageCaptcha(_Captcha):
     :param font_sizes: Random choose a font size from this parameters.
     """
 
-    def __init__(self, width=128, height=32, fonts=None, font_sizes=None):
+    def __init__(self, width=100, height=36, fonts=None, font_sizes=None):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or (20, 24, 28)
+        self._font_sizes = font_sizes or (24, 28, 32)
         self._truefonts = []
 
     @property
@@ -149,8 +149,8 @@ class ImageCaptcha(_Captcha):
         def _draw_character(c, font):
             w, h = draw.textsize(c, font=font)
 
-            dx = 5
-            dy = 5
+            dx = 4
+            dy = 4
             im = Image.new('RGB', (w + dx, h + dy))
             Draw(im).text((dx, dy), c, font=font, fill=random_color(10, 200, 30))
             return im
@@ -259,6 +259,21 @@ generate_captchas(valid_path, 5000)
 print("Generating testing captchas")
 generate_captchas(test_path, 5000)
 
+
+""" to use downscaling (only by half) 
+(not currently used but if needed)
+
+import cv2
+
+image = cv2.imread('test.png')
+print("Size of image before change: ", image.shape)
+cv2.imshow(image)
+
+image = cv2.pyrDown(image)
+print("Size of image after change: ", image.shape)
+cv2.imshow(image)
+
+"""
 """ Export on colab
 !zip -r /content/Captcha.zip /content/Captcha
 
