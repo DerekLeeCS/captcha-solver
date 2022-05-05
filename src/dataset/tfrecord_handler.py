@@ -7,7 +7,7 @@ import tensorflow as tf
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
-def load_image(filename: str) -> tf.Tensor:
+def load_png_image(filename: str) -> tf.Tensor:
     """Read an image given the file name.
     From:
     https://www.tensorflow.org/api_docs/python/tf/io/read_file

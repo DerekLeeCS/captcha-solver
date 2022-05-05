@@ -2,7 +2,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 from dataset.captcha_dataset import CaptchaDataset
-from dataset.tfrecord_handler import TFRecordHandler, load_image
+from dataset.tfrecord_handler import TFRecordHandler, load_png_image
 from model import create_model, prepare_example, preprocess_image
 
 # From:

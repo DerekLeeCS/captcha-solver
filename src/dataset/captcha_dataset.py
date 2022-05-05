@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 
 import tensorflow as tf
 
-from dataset.tfrecord_handler import TFRecordHandler, load_image
+from dataset.tfrecord_handler import TFRecordHandler, load_png_image
 
 
 class CaptchaDataset:
@@ -32,7 +32,7 @@ class CaptchaDataset:
         count = 0
         for file in os.listdir(dir_name):
             filename = os.path.join(dir_name, file)
-            image = load_image(filename)
+            image = load_png_image(filename)
             label = list(file.split('_')[0])
             label = [CaptchaDataset._LABEL_MAPPINGS[x] for x in label]
 
